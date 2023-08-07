@@ -1,2 +1,2 @@
-# mssivimss-balance-caja
-CU69 RealizarBalanceCaja SIVIMSS
+# mssivimss-arquetipo
+Arquetipo
