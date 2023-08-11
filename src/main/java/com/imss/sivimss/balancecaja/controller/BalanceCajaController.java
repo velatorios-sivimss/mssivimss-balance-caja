@@ -58,6 +58,12 @@ public class BalanceCajaController {
 		return CompletableFuture
 				.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
 	}
+	@PostMapping("/modificar-pago")
+	public CompletableFuture<Object>modificarPAgo(@RequestBody DatosRequest request, Authentication authentication) throws IOException, SQLException{
+		Response<?>response=balanceCajaService.modificarPago(request, authentication);
+		return CompletableFuture
+				.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
+	}
 	
 	
 	/**

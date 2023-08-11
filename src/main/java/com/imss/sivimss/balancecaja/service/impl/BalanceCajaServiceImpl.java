@@ -7,6 +7,8 @@ import java.util.logging.Level;
 
 import javax.xml.bind.DatatypeConverter;
 
+import com.imss.sivimss.balancecaja.beans.ModificarPago;
+import com.imss.sivimss.balancecaja.model.request.PagoRequest;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,8 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	private FolioOrdenServicio folioOrdenServicio=FolioOrdenServicio.obtenerFolioOrdenInstance();
 
 	private FolioConvenio folioConvenio=FolioConvenio.obtenerFolioConvenioInstance();
+
+	ModificarPago modificarPago = new ModificarPago();
 	
 	public BalanceCajaServiceImpl(ProviderServiceRestTemplate providerServiceRestTemplate, ModelMapper modelMapper, LogUtil logUtil) {
 		this.providerServiceRestTemplate = providerServiceRestTemplate;
@@ -151,7 +155,20 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 
 	@Override
 	public Response<Object> modificarPago(DatosRequest request, Authentication authentication) throws IOException {
-		return null;
+		Gson json = new Gson();
+		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
+		PagoRequest actualizaPago = json.fromJson(datosJson, PagoRequest.class);
+		Response<Object>response;
+		response = providerServiceRestTemplate.consumirServicio(modificarPago.actualizaMotivo(actualizaPago).getDatos(),
+				urlDominio.concat(AppConstantes.CATALOGO_ACTUALIZAR),authentication);
+		if(response.getCodigo()==200){
+			return response;
+		}
+		response.setError(true);
+		response.setCodigo(500);
+		response.setMensaje("");
+		response.setDatos(response.getDatos());
+		return response;
 	}
 
 	@Override
