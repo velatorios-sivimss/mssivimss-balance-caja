@@ -14,12 +14,14 @@ import java.util.Objects;
 
 public class ModificarPago {
     private static final Logger log = LoggerFactory.getLogger(ModificarPago.class);
-    public DatosRequest actualizaMotivo(PagoRequest request){
+    public DatosRequest actualizaMotivo(PagoRequest request, String usuario){
         DatosRequest dr = new DatosRequest();
         Map<String, Object> parametro = new HashMap<>();
         final QueryHelper q = new QueryHelper("UPDATE SVT_PAGO_DETALLE");
         String motivo = Objects.isNull(request.getMotivoModifica()) ? "" : "'" + request.getMotivoModifica() + "'";
         q.agregarParametroValues("DES_MOTIVO_MODIFICA", motivo);
+        q.agregarParametroValues("ID_USUARIO_MODIFICA", "'"+usuario+"'");
+        q.agregarParametroValues("FEC_ACTUALIZACION", "NOW()");
         q.addWhere("ID_PAGO_DETALLE = " + request.getIdPagoDetalle());
         String query = q.obtenerQueryActualizar();
         String encoded = DatatypeConverter.printBase64Binary(query.getBytes());

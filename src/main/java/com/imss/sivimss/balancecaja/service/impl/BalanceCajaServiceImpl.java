@@ -9,6 +9,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.imss.sivimss.balancecaja.beans.ModificarPago;
 import com.imss.sivimss.balancecaja.model.request.PagoRequest;
+import com.imss.sivimss.balancecaja.model.request.UsuarioDto;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,10 +157,11 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	@Override
 	public Response<Object> modificarPago(DatosRequest request, Authentication authentication) throws IOException {
 		Gson json = new Gson();
+		UsuarioDto usuarioDto = json.fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		PagoRequest actualizaPago = json.fromJson(datosJson, PagoRequest.class);
 		Response<Object>response;
-		response = providerServiceRestTemplate.consumirServicio(modificarPago.actualizaMotivo(actualizaPago).getDatos(),
+		response = providerServiceRestTemplate.consumirServicio(modificarPago.actualizaMotivo(actualizaPago,usuarioDto.getIdUsuario().toString()).getDatos(),
 				urlDominio.concat(AppConstantes.CATALOGO_ACTUALIZAR),authentication);
 		if(response.getCodigo()==200){
 			return response;
