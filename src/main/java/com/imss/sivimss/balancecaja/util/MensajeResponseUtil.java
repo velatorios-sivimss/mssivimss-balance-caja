@@ -41,5 +41,15 @@ public class MensajeResponseUtil {
 		}
 		return respuestaGenerado;
 	}
+	public static Response<Object> mensajeResponseObject(Response<Object> respuestaGenerado, String numeroMensaje) {
+		Integer codigo = respuestaGenerado.getCodigo();
+		if (codigo == 200) {
+			respuestaGenerado.setMensaje(numeroMensaje);
+		} else {
+			log.error("Error.. {}", respuestaGenerado.getMensaje());
+			respuestaGenerado.setMensaje("5");
+		}
+		return respuestaGenerado;
+	}
 
 }

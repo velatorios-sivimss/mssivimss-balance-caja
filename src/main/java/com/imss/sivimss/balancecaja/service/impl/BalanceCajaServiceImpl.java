@@ -8,7 +8,9 @@ import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 
 import com.imss.sivimss.balancecaja.beans.ModificarPago;
+import com.imss.sivimss.balancecaja.beans.RealizarCierre;
 import com.imss.sivimss.balancecaja.model.request.PagoRequest;
+import com.imss.sivimss.balancecaja.model.request.RealizarCierreRequest;
 import com.imss.sivimss.balancecaja.model.request.UsuarioDto;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 import com.imss.sivimss.balancecaja.beans.FolioConvenio;
 import com.imss.sivimss.balancecaja.beans.FolioOrdenServicio;
+import com.imss.sivimss.balancecaja.model.request.ActualizarMultiRequest;
 import com.imss.sivimss.balancecaja.model.request.FolioRequest;
 import com.imss.sivimss.balancecaja.model.response.FolioResponse;
 import com.imss.sivimss.balancecaja.service.BalanceCajaService;
@@ -53,6 +56,9 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	private FolioConvenio folioConvenio=FolioConvenio.obtenerFolioConvenioInstance();
 
 	ModificarPago modificarPago = new ModificarPago();
+	
+	private static final String CU69_NAME= "Realizar cierre : ";
+	private static final String MODIFICADO_CORRECTAMENTE = "18"; // Modificado correctamente.
 	
 	public BalanceCajaServiceImpl(ProviderServiceRestTemplate providerServiceRestTemplate, ModelMapper modelMapper, LogUtil logUtil) {
 		this.providerServiceRestTemplate = providerServiceRestTemplate;
@@ -175,7 +181,21 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 
 	@Override
 	public Response<Object> realizarCierre(DatosRequest request, Authentication authentication) throws IOException {
-
-		return null;
+		String consulta = "";
+		try {
+			RealizarCierreRequest realizarCierreRequest= new Gson().fromJson(String.valueOf(request.getDatos().get(AppConstantes.DATOS)), RealizarCierreRequest.class);
+			UsuarioDto usuarioDto = new Gson().fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
+			logUtil.crearArchivoLog(Level.INFO.toString(), CU69_NAME +  this.getClass().getSimpleName(),	this.getClass().getPackage().toString(), "actualiza realizar cierre", AppConstantes.MODIFICACION, authentication);
+			ActualizarMultiRequest actualizarMultiRequest = new RealizarCierre().actualizaEstatusCierre(realizarCierreRequest, usuarioDto);
+			consulta = actualizarMultiRequest.toString();
+			Response<Object>response = providerServiceRestTemplate.consumirServicio(actualizarMultiRequest, urlDominio.concat("/actualizar/multiples") , authentication);
+			return MensajeResponseUtil.mensajeResponseObject(response, MODIFICADO_CORRECTAMENTE);
+		} catch (Exception e) {
+			e.printStackTrace();
+			 log.error(AppConstantes.ERROR_QUERY.concat(consulta));
+			logUtil.crearArchivoLog(Level.SEVERE.toString(), this.getClass().getSimpleName(),this.getClass().getPackage().toString(), AppConstantes.ERROR_LOG_QUERY + consulta, AppConstantes.CONSULTA,
+					authentication);
+			throw new IOException(AppConstantes.ERROR_CONSULTAR, e.getCause());
+		}
 	}
 }
