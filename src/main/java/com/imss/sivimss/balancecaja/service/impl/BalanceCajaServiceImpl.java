@@ -149,4 +149,9 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	        throw new IOException(AppConstantes.ERROR_CONSULTAR, e.getCause());
 		}
 	}
+
+	@Override
+	public Response<Object> modificarPago(DatosRequest request, Authentication authentication) throws IOException {
+		return null;
+	}
 }
