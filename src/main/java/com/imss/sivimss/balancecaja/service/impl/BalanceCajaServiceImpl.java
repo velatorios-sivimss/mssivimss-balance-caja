@@ -1,7 +1,6 @@
 package com.imss.sivimss.balancecaja.service.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -152,6 +151,12 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 
 	@Override
 	public Response<Object> modificarPago(DatosRequest request, Authentication authentication) throws IOException {
+		return null;
+	}
+
+	@Override
+	public Response<Object> realizarCierre(DatosRequest request, Authentication authentication) throws IOException {
+
 		return null;
 	}
 }

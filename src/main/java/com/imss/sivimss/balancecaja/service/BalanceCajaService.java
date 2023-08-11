@@ -15,4 +15,5 @@ public interface BalanceCajaService {
 	Response<Object>consultarFolioConvenio(DatosRequest request, Authentication authentication) throws IOException;
 	Response<Object>consultarFolioRenovacionConvenio(DatosRequest request, Authentication authentication) throws IOException;
 	Response<Object>modificarPago(DatosRequest request, Authentication authentication) throws IOException;
+	Response<Object> realizarCierre(DatosRequest request, Authentication authentication) throws IOException;
 }
