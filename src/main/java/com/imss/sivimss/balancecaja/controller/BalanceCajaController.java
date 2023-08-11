@@ -21,6 +21,9 @@ import com.imss.sivimss.balancecaja.util.ProviderServiceRestTemplate;
 import com.imss.sivimss.balancecaja.util.Response;
 
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 
 
 @RestController
@@ -63,6 +66,15 @@ public class BalanceCajaController {
 		Response<?>response=balanceCajaService.modificarPago(request, authentication);
 		return CompletableFuture
 				.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
+	}
+	
+	@PostMapping("/realiza/cierre")
+	@CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@TimeLimiter(name = "msflujo")
+	public CompletableFuture<Object> actualizaEstatusCierre(@RequestBody DatosRequest request,Authentication authentication) throws IOException {
+		Response<Object> response =  balanceCajaService.realizarCierre(request, authentication);
+		return CompletableFuture.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
 	}
 	
 	
