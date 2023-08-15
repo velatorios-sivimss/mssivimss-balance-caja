@@ -59,7 +59,7 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	private final LogUtil logUtil;
 	
 	
-	private static final Logger log = LoggerFactory.getLogger(BalanceCajaService.class);
+	private static final Logger log = LoggerFactory.getLogger(BalanceCajaServiceImpl.class);
 
 	private final ProviderServiceRestTemplate providerServiceRestTemplate;
 	
@@ -234,15 +234,19 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		ReporteRequest reporteRequest = gson.fromJson(datosJson, ReporteRequest.class);
 
-		String query = consultaGral.consultarGralFiltros(request, reporteRequest,formatoFecha);
+		String query = consultaGral.consultarGralFiltros(reporteRequest,formatoFecha);
 		DatosRequest datosRequest= encodeQuery(query, request);
 			try {
-				log.info(CU069_NOMBRE + " " + query);
+				log.info(CU069_NOMBRE);
+				log.info(query);
 				logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(), this.getClass().getPackage().toString(), "consultarDonados", CONSULTA, authentication);
 				Response<Object>  response = providerRestTemplate.consumirServicio(datosRequest.getDatos(), urlDominio + CONSULTAR_PAGINADO, authentication);
 				return MensajeResponseUtil.mensajeConsultaResponse(response, NO_SE_ENCONTRO_INFORMACION);
 			} catch (Exception e) {
-				log.error( CU069_NOMBRE +CONSULTAR_FILTRO_PAGINADO +ERROR_QUERY +  query);
+				log.error( CU069_NOMBRE );
+				log.error(CONSULTAR_FILTRO_PAGINADO );
+				log.error(ERROR_QUERY );
+				log.error( query);
 				logUtil.crearArchivoLog(Level.WARNING.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(),
 						this.getClass().getPackage().toString(), ERROR_QUERY +  query, CONSULTA, authentication);
 				throw new IOException("52", e.getCause());
@@ -256,16 +260,20 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		ReporteRequest reporteRequest = gson.fromJson(datosJson, ReporteRequest.class);
 		
-		String query = consultaGral.consultarTotalesGralFiltros(request, reporteRequest);
+		String query = consultaGral.consultarTotalesGralFiltros(reporteRequest);
 		DatosRequest datosRequest= encodeQuery(query, request);
 			try {
-				log.info(CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + query);
+				log.info(CU069_NOMBRE);
+				log.info(query);
 				logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(), this.getClass().getPackage().toString(), "consultarDonados", CONSULTA, authentication);
 				Response<Object> response = providerRestTemplate.consumirServicio(datosRequest.getDatos(), urlDominio + CATALOGO_CONSULTAR, authentication);
 		
 				return MensajeResponseUtil.mensajeConsultaResponse(response, NO_SE_ENCONTRO_INFORMACION);
 			} catch (Exception e) {
-				log.error( CU069_NOMBRE +CONSULTAR_FILTRO_PAGINADO +ERROR_QUERY +  query);
+				log.error( CU069_NOMBRE );
+				log.error(CONSULTAR_FILTRO_PAGINADO );
+				log.error(ERROR_QUERY );
+				log.error( query);
 				logUtil.crearArchivoLog(Level.WARNING.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(),
 						this.getClass().getPackage().toString(), ERROR_QUERY +  query, CONSULTA, authentication);
 				throw new IOException("52", e.getCause());
@@ -277,10 +285,12 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		ReporteRequest reporteRequest = gson.fromJson(datosJson, ReporteRequest.class);
 		ConsultaGeneral consultaGral = new ConsultaGeneral();
-		String query = consultaGral.consultarTotalesGralFiltros(request, reporteRequest);
+		String query = consultaGral.consultarTotalesGralFiltros(reporteRequest);
 
 		try {
-			log.info( CU069_NOMBRE + GENERAR_DOCUMENTO + query);
+			log.info( CU069_NOMBRE );
+			log.info( GENERAR_DOCUMENTO );
+			log.info( query);
 			DatosRequest datosRequest= encodeQuery(query, request);
 			Response<Object> response = providerRestTemplate.consumirServicio(datosRequest, urlDominio + CATALOGO_CONSULTAR, authentication);
 
@@ -289,7 +299,7 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 			ReporteRequest reporteTotales = gson.fromJson(json, ReporteRequest.class);
 			
 			Map<String, Object> envioDatos = new HashMap<>();
-			query = consultaGral.consultarGralFiltros(request, reporteRequest, formatoFecha);
+			query = consultaGral.consultarGralFiltros(reporteRequest, formatoFecha);
 			envioDatos.put("query", query);
 			envioDatos.put("totalImporte", reporteTotales.getTotalImporte());
 			envioDatos.put("totalIngreso", reporteTotales.getTotalIngreso());
@@ -301,7 +311,10 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 			response = providerServiceRestTemplate.consumirServicioReportes(envioDatos, urlReportes, authentication);
 			return MensajeResponseUtil.mensajeConsultaResponse(response, ERROR_AL_DESCARGAR_DOCUMENTO);
 		} catch (Exception e) {
-			log.error( CU069_NOMBRE + GENERAR_DOCUMENTO + ERROR_QUERY + query);
+			log.error( CU069_NOMBRE );
+			log.error(GENERAR_DOCUMENTO );
+			log.error(ERROR_QUERY );
+			log.error( query);
 			logUtil.crearArchivoLog(Level.WARNING.toString(), CU069_NOMBRE + GENERAR_DOCUMENTO + this.getClass().getSimpleName(),
 					this.getClass().getPackage().toString(), ERROR_QUERY + query, GENERA_DOCUMENTO,
 					authentication);
