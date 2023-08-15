@@ -37,7 +37,7 @@ public class ConsultaGeneral {
 	  		+ generaWhere(datos);
 	}
 	
-	private StringBuilder generaEcabezados(String formatoFecha) {
+	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
 		StringBuilder query = new StringBuilder();
 		query.append("SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle ")
 				.append(", IFNULL(sd.DES_DELEGACION,'') AS delegacion")
@@ -49,7 +49,28 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spd.IMP_IMPORTE,'')  AS ingresoNeto ")
 				.append(", IFNULL(spd.IND_ESTATUS_CAJA,'')  AS modifPago ")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_CIERRE_CAJA,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
-				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ");
+				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
+				.append(", (SELECT SUM(spb.DESC_VALOR) FROM SVT_PAGO_BITACORA spb "
+						+ "JOIN SVC_VELATORIO sv ON	sv.ID_VELATORIO = spb.ID_VELATORIO "
+						+ "JOIN SVC_DELEGACION sd ON sd.ID_DELEGACION = sv.ID_DELEGACION "
+						+ "JOIN SVT_PAGO_DETALLE spd ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
+						+ "JOIN SVC_METODO_PAGO smp ON smp.ID_METODO_PAGO = spd.ID_METODO_PAGO "
+						+ "JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO "
+						+ generaWhere(datos) + ") AS totalImporte "
+						+ "	,(SELECT SUM (spd.IMP_IMPORTE) FROM SVT_PAGO_BITACORA spb "
+						+ "JOIN SVC_VELATORIO sv ON sv.ID_VELATORIO = spb.ID_VELATORIO "
+						+ "JOIN SVC_DELEGACION sd ON sd.ID_DELEGACION = sv.ID_DELEGACION "
+						+ "JOIN SVT_PAGO_DETALLE spd ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
+						+ "JOIN SVC_METODO_PAGO smp ON smp.ID_METODO_PAGO = spd.ID_METODO_PAGO "
+						+ "JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO "
+						+ generaWhere(datos) +  ") AS totalIngreso "
+						+ "	,(SELECT COUNT(spb.ID_PAGO_BITACORA) FROM SVT_PAGO_BITACORA spb "
+						+ "JOIN SVC_VELATORIO sv ON sv.ID_VELATORIO = spb.ID_VELATORIO "
+						+ "JOIN SVC_DELEGACION sd ON sd.ID_DELEGACION = sv.ID_DELEGACION "
+						+ "JOIN SVT_PAGO_DETALLE spd ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
+						+ "JOIN SVC_METODO_PAGO smp ON smp.ID_METODO_PAGO = spd.ID_METODO_PAGO "
+						+ "JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO "
+						+ generaWhere(datos) + ") AS totalRegistros");
 		return query;
 	}
 
@@ -64,7 +85,7 @@ public class ConsultaGeneral {
 		return query;
 	}
 	private String queryODS (ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(formatoFecha).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
 				.append(",'Pago de Orden de servicio' AS tipoIngreso ")
 				.append(", DATE_FORMAT(sos.FEC_ALTA,'" + formatoFecha + "') AS fecha")
 				.append(generaFromJoin())
@@ -74,7 +95,7 @@ public class ConsultaGeneral {
 	}
 	
 	private String queryConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(", 'Pago de Nuevos convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + "') AS fecha")
 				.append(generaFromJoin())
@@ -85,7 +106,7 @@ public class ConsultaGeneral {
 	}
 	
 	private String queryRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + "') AS fecha")
 				.append(generaFromJoin())
