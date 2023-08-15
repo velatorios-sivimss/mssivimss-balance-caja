@@ -72,9 +72,9 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	ModificarPago modificarPago = new ModificarPago();
 
 	private static final String ERROR_QUERY = "Error al ejecutar el query: ";
-	private static final String NO_SE_ENCONTRO_INFORMACION = "45"; // No se encontró información relacionada a tu
+	private static final String NO_SE_ENCONTRO_INFORMACION = "45"; // No se encontrï¿½ informaciï¿½n relacionada a tu
 	private static final String ERROR_AL_DESCARGAR_DOCUMENTO= "64"; // Error en la descarga del documento.Intenta nuevamente.
-	// búsqueda.
+	// bï¿½squeda.
 
 	private static final String CU069_NOMBRE = "BalanceCaja: ";
 	private static final String CATALOGO_CONSULTAR= "/consulta";
@@ -220,7 +220,6 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 			Response<Object>response = providerServiceRestTemplate.consumirServicio(actualizarMultiRequest, urlDominio.concat("/actualizar/multiples") , authentication);
 			return MensajeResponseUtil.mensajeResponseObject(response, MODIFICADO_CORRECTAMENTE);
 		} catch (Exception e) {
-			e.printStackTrace();
 			 log.error(AppConstantes.ERROR_QUERY.concat(consulta));
 			logUtil.crearArchivoLog(Level.SEVERE.toString(), this.getClass().getSimpleName(),this.getClass().getPackage().toString(), AppConstantes.ERROR_LOG_QUERY + consulta, AppConstantes.CONSULTA,
 					authentication);
