@@ -78,18 +78,27 @@ public class BalanceCajaController {
 	}
 
 	@PostMapping("/consultar/balance-caja")
+	@CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@TimeLimiter(name = "msflujo")
 	public CompletableFuture<Object>consultarFiltroPaginado(@RequestBody DatosRequest request, Authentication authentication) throws IOException, SQLException{
 		Response<?>response=balanceCajaService.consultarFiltroPaginado(request, authentication);
 		return CompletableFuture
 				.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
 	}
 	@PostMapping("/consultar/total-balance-caja")
+	@CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@TimeLimiter(name = "msflujo")
 	public CompletableFuture<Object>consultarTotalFiltroPaginado(@RequestBody DatosRequest request, Authentication authentication) throws IOException, SQLException{
 		Response<?>response=balanceCajaService.consultarTotalesFiltroPaginado(request, authentication);
 		return CompletableFuture
 				.supplyAsync(() -> new ResponseEntity<>(response, HttpStatus.valueOf(response.getCodigo())));
 	}
 	@PostMapping("/generar/reporte-balance-caja")
+	@CircuitBreaker(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@Retry(name = "msflujo", fallbackMethod = "fallbackGenerico")
+	@TimeLimiter(name = "msflujo")
 	public CompletableFuture<Object>generarReporteBalanceCaja(@RequestBody DatosRequest request, Authentication authentication) throws IOException, SQLException{
 		Response<?>response=balanceCajaService.generarReporteBalanceCaja(request, authentication);
 		return CompletableFuture
