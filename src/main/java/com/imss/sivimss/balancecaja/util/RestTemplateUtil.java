@@ -68,20 +68,33 @@ public class RestTemplateUtil {
 	 * @param clazz
 	 * @return
 	 */
-	public Response<?> sendPostRequestByteArrayToken(String url, EnviarDatosRequest body, String subject,
+	public Response<Object> sendPostRequestByteArrayToken(String url, EnviarDatosRequest body, String subject,
 			Class<?> clazz) throws IOException {
-		Response<?> responseBody = new Response<>();
+		Response<Object> responseBody = new Response<>();
 		HttpHeaders headers = RestTemplateUtil.createHttpHeadersToken(subject);
 
 		HttpEntity<Object> request = new HttpEntity<>(body, headers);
 		ResponseEntity<?> responseEntity = null;
-
-		responseEntity = restTemplate.postForEntity(url, request, clazz);
-
-		responseBody = (Response<List<String>>) responseEntity.getBody();
+		try {
+			responseEntity = restTemplate.postForEntity(url, request, clazz);
+			if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody() != null) {
+				// noinspection unchecked
+				responseBody = (Response<Object>) responseEntity.getBody();
+			} else {
+				throw new IOException("Ha ocurrido un error al enviar");
+			}
+		} catch (IOException ioException) {
+			throw ioException;
+		} catch (Exception e) {
+			log.error("Fallo al consumir el servicio, {}", e.getMessage());
+			responseBody.setCodigo(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			responseBody.setError(true);
+			responseBody.setMensaje(e.getMessage());
+		}
 
 		return responseBody;
 	}
+
 
 	/**
 	 * Crea los headers para la petici&oacute;n falta agregar el tema de seguridad
@@ -192,5 +205,23 @@ public class RestTemplateUtil {
 		responseBody = (Response<List<String>>) responseEntity.getBody();
 
 		return responseBody;
+	}
+	
+	/**
+	 * Env&iacute;a una petici&oacute;n con Body y token.
+	 *
+	 * @param url
+	 * @param clazz
+	 * @return
+	 */
+	public Response<Object> sendPostRequestByteArrayToken(String url, Object body, String subject,
+			Class<?> clazz) {
+		HttpHeaders headers = RestTemplateUtil.createHttpHeadersToken(subject);
+
+		HttpEntity<Object> request = new HttpEntity<>(body, headers);
+
+		 ResponseEntity<Object> responseEntity = (ResponseEntity<Object>) restTemplate.postForEntity(url, request, clazz);
+
+		return (Response<Object>) responseEntity.getBody();
 	}
 }

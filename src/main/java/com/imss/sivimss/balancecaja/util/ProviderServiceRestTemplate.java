@@ -25,24 +25,25 @@ public class ProviderServiceRestTemplate {
 	private JwtTokenProvider jwtTokenProvider;
 
 	private static final Logger log = LoggerFactory.getLogger(ProviderServiceRestTemplate.class);
+	
+	private static final String ERROR_RECUPERAR_INFORMACION = "Ha ocurrido un error al recuperar la informacion";
 
-	public Response<?> consumirServicio(Map<String, Object> dato, String url, Authentication authentication)
+	public Response<Object> consumirServicio(Map<String, Object> dato, String url, Authentication authentication)
 			throws IOException {
 		try {
-			Response<?> respuestaGenerado = restTemplateUtil.sendPostRequestByteArrayToken(url,
+			return restTemplateUtil.sendPostRequestByteArrayToken(url,
 					new EnviarDatosRequest(dato), jwtTokenProvider.createToken((String) authentication.getPrincipal()),
 					Response.class);
-			return validarResponse(respuestaGenerado);
 		} catch (IOException exception) {
-			log.error("Ha ocurrido un error al recuperar la informacion");
+			log.error(ERROR_RECUPERAR_INFORMACION);
 			throw exception;
 		}
 	}
 
-	public Response<?> consumirServicioReportes(Map<String, Object> dato,
+	public Response<Object> consumirServicioReportes(Map<String, Object> dato,
 			String url, Authentication authentication) throws IOException {
 		try {
-			Response<?> respuestaGenerado = restTemplateUtil.sendPostRequestByteArrayReportesToken(url,
+			Response<Object> respuestaGenerado = (Response<Object>) restTemplateUtil.sendPostRequestByteArrayReportesToken(url,
 					new DatosReporteDTO(dato),
 					jwtTokenProvider.createToken((String) authentication.getPrincipal()), Response.class);
 			return validarResponse(respuestaGenerado);
@@ -51,8 +52,30 @@ public class ProviderServiceRestTemplate {
 			throw exception;
 		}
 	}
+	
+	public Response<Object> consumirServicio(Object dato, String url, Authentication authentication) {
+		Response<Object> respuestaGenerado =  restTemplateUtil.sendPostRequestByteArrayToken(url,
+				dato, jwtTokenProvider.createToken((String) authentication.getPrincipal()),
+				Response.class);
+		return validarResponseObject(respuestaGenerado);
+	}
+	
+	public Response<Object> validarResponseObject(Response<Object> respuestaGenerado) {
+		String codigo = respuestaGenerado.getMensaje().substring(0, 3);
+		if (codigo.equals("500") || codigo.equals("404") || codigo.equals("400") || codigo.equals("403")) {
+			Gson gson = new Gson();
+			String mensaje = respuestaGenerado.getMensaje().substring(7, respuestaGenerado.getMensaje().length() - 1);
 
-	public Response<?> validarResponse(Response<?> respuestaGenerado) {
+			ErrorsMessageResponse apiExceptionResponse = gson.fromJson(mensaje, ErrorsMessageResponse.class);
+
+			respuestaGenerado = Response.builder().codigo((int) apiExceptionResponse.getCodigo()).error(true)
+					.mensaje(apiExceptionResponse.getMensaje()).datos(apiExceptionResponse.getDatos()).build();
+
+		}
+		return respuestaGenerado;
+	}
+
+	public Response<Object> validarResponse(Response<Object> respuestaGenerado) {
 		String codigo = respuestaGenerado.getMensaje().substring(0, 3);
 		if (codigo.equals("500") || codigo.equals("404") || codigo.equals("400") || codigo.equals("403")) {
 			Gson gson = new Gson();
