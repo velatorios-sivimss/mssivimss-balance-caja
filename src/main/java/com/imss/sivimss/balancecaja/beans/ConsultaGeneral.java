@@ -48,7 +48,7 @@ public class ConsultaGeneral {
 				.append(", IFNULL(smp.DESC_METODO_PAGO,'') AS metodoPago ")
 				.append(", IFNULL(spb.DESC_VALOR,'')  AS importe ")
 				.append(", IFNULL(spd.IMP_IMPORTE,'')  AS ingresoNeto ")
-				.append(", IFNULL(spd.IND_ESTATUS_CAJA,0)  AS modifPago ")
+				.append(", IFNULL(spd.DES_MOTIVO_MODIFICA,'')  AS modifPago ")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_CIERRE_CAJA,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
 				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
 				.append(", (SELECT SUM(spb.DESC_VALOR) "
@@ -115,17 +115,26 @@ public class ConsultaGeneral {
 	
 	private String generaWhere(ReporteRequest datos) {
 		StringBuilder where = new StringBuilder();
-		where.append(" WHERE spb.CVE_FOLIO IN('");
 		if(datos.getFolioODS()!=null) {
-			where.append(datos.getFolioODS() + "'"); 
+			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append("'" + datos.getFolioODS() + "'"); 
 			if(datos.getFolioNuevoConvenio()!=null)
 				where.append(",'" + datos.getFolioNuevoConvenio() + "'"); 
 			if(datos.getFolioRenovacionConvenio()!=null)
 				where.append(",'" + datos.getFolioRenovacionConvenio() + "'"); 
 			where.append(")");
-		}else {
-			where.append("')");
+		}else if(datos.getFolioNuevoConvenio()!=null) {
+			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append("'" + datos.getFolioNuevoConvenio() + "'"); 
+			if(datos.getFolioRenovacionConvenio()!=null)
+				where.append(",'" + datos.getFolioRenovacionConvenio() + "'"); 
+			where.append(")");
+		}else if(datos.getFolioRenovacionConvenio()!=null) {
+			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append("'" + datos.getFolioRenovacionConvenio() + "'"); 
+			where.append(")");
 		}
+
 		if(datos.getIdDelegacion()!= null)
 			where.append(" AND sd.ID_DELEGACION = " + datos.getIdDelegacion());
 		if(datos.getIdVelatorio()!= null)
