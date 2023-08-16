@@ -133,7 +133,7 @@ public class ConsultaGeneral {
 		if(datos.getIdMetodoPago()!= null)
 			where.append(" AND smp.ID_METODO_PAGO = " + datos.getIdMetodoPago());
 		if(datos.getFecha()!= null)
-			where.append(" AND DATE_FORMAT(smp.ID_METODO_PAGO,'YY-MM-DD') = DATE_FORMAT(" + datos.getFecha() +",'YY-MM-DD')");
+			where.append(" AND DATE_FORMAT(spb.FEC_ODS,'YY-MM-DD') = DATE_FORMAT('" + datos.getFecha() +"','YY-MM-DD')");
 		
 		return where.toString();
 	}
