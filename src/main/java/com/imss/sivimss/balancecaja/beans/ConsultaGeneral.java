@@ -23,13 +23,31 @@ public class ConsultaGeneral {
 	private Integer idVelatorio;
 	
 	private static final String AS_FECHA = "') AS fecha";
+	private static final String WHERE_SPB_CVE_FOLIO_IN = " WHERE spb.CVE_FOLIO IN(";
+	private static final String JOIN_SVC_ORDEN_SERVICIO = "JOIN SVC_ORDEN_SERVICIO sos ON sos.CVE_FOLIO = spb.CVE_FOLIO ";
+	private static final String JOIN_SVC_ESTATUS_ORDEN_SERVICIO = "JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO ";
+	private static final String JOIN_SVT_CONVENIO_PF= "JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO ";
+	private static final String JOIN_SVT_ESTATUS_CONVENIO_PF = "JOIN SVC_ESTATUS_CONVENIO_PF secp ON secp.ID_ESTATUS_CONVENIO_PF = scp.ID_ESTATUS_CONVENIO ";
 	
 	public ConsultaGeneral(Object obj) {}
 	
 	public String consultarGralFiltros(ReporteRequest datos, String formatoFecha) {
-		  return queryODS(datos, formatoFecha) + " UNION " + queryConvenios(datos, formatoFecha) + " UNION " + queryRenovacionConvenios(datos, formatoFecha);
+		StringBuilder query  = new StringBuilder();
+		if(datos.getIdTipoConvenio() == null || datos.getIdTipoConvenio() == 0) {
+			query.append(queryODS(datos, formatoFecha))
+			.append(" UNION ")
+			.append(queryConvenios(datos, formatoFecha))
+			.append(" UNION ")
+			.append(queryRenovacionConvenios(datos, formatoFecha));
+		}else if(datos.getIdTipoConvenio() == 1) {
+			query.append(queryODS(datos, formatoFecha));
+		}else if (datos.getIdTipoConvenio() == 2) {
+			query.append(queryConvenios(datos, formatoFecha));
+		}else if(datos.getIdTipoConvenio() == 3) {
+			query.append(queryRenovacionConvenios(datos, formatoFecha));
+		}
+		  return query.toString();
 	}
-	
 	public String consultarTotalesGralFiltros(ReporteRequest datos) {
 	return "SELECT SUM(spb.DESC_VALOR) AS totalImporte "
 	  		+ ", SUM (spd.IMP_IMPORTE) AS totalIngreso "
@@ -38,7 +56,7 @@ public class ConsultaGeneral {
 	  		+ generaWhere(datos);
 	}
 	
-	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
+	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha, int tipoConvenio) {
 		StringBuilder query = new StringBuilder();
 		query.append("SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle ")
 				.append(", IFNULL(sd.DES_DELEGACION,'') AS delegacion")
@@ -51,23 +69,65 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spd.DES_MOTIVO_MODIFICA,'')  AS modifPago ")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_CIERRE_CAJA,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
 				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
-				.append(", (SELECT SUM(spb.DESC_VALOR) "
-						+ generaFromJoin()
-						+ generaWhere(datos) + ") AS totalImporte "
-						+ ", (SELECT SUM (spd.IMP_IMPORTE) FROM SVT_PAGO_BITACORA spb "
-						+ "JOIN SVC_VELATORIO sv ON sv.ID_VELATORIO = spb.ID_VELATORIO "
-						+ "JOIN SVC_DELEGACION sd ON sd.ID_DELEGACION = sv.ID_DELEGACION "
-						+ "JOIN SVT_PAGO_DETALLE spd ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
-						+ "JOIN SVC_METODO_PAGO smp ON smp.ID_METODO_PAGO = spd.ID_METODO_PAGO "
-						+ "JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO "
-						+ generaWhere(datos) +  ") AS totalIngreso "
-						+ ", (SELECT COUNT(spb.ID_PAGO_BITACORA) FROM SVT_PAGO_BITACORA spb "
-						+ "JOIN SVC_VELATORIO sv ON sv.ID_VELATORIO = spb.ID_VELATORIO "
-						+ "JOIN SVC_DELEGACION sd ON sd.ID_DELEGACION = sv.ID_DELEGACION "
-						+ "JOIN SVT_PAGO_DETALLE spd ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
-						+ "JOIN SVC_METODO_PAGO smp ON smp.ID_METODO_PAGO = spd.ID_METODO_PAGO "
-						+ "JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO "
-						+ generaWhere(datos) + ") AS totalRegistros");
+				.append(importeTotal(datos, tipoConvenio))
+				.append(totalIngreso(datos, tipoConvenio))
+				.append(totalRegistros(datos, tipoConvenio));
+		return query;
+	}
+
+
+	private StringBuilder importeTotal(ReporteRequest datos, int tipoConvenio) {
+		StringBuilder query = new StringBuilder();
+				query.append(", (SELECT SUM(spb.DESC_VALOR) ")
+			.append( generaFromJoin());
+		if(tipoConvenio == 1) {
+			query.append(JOIN_SVC_ORDEN_SERVICIO)
+			.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO);
+		}
+		if(tipoConvenio == 2) {
+			query.append(JOIN_SVT_CONVENIO_PF)
+			.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+		if (tipoConvenio == 3) {
+			query.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+			query.append(generaWhere(datos) + ") AS totalImporte ");
+				return query;
+	}
+	private StringBuilder totalIngreso (ReporteRequest datos, int tipoConvenio) {
+		StringBuilder query = new StringBuilder();
+		query.append(", (SELECT SUM (spd.IMP_IMPORTE)")
+		.append( generaFromJoin());
+		if(tipoConvenio == 1) {
+			query.append(JOIN_SVC_ORDEN_SERVICIO)
+			.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO);
+		}
+		if(tipoConvenio == 2) {
+			query.append(JOIN_SVT_CONVENIO_PF)
+			.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+		if (tipoConvenio == 3) {
+			query.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+		query.append(generaWhere(datos) +  ") AS totalIngreso ");
+		return query;
+	}
+	private StringBuilder totalRegistros (ReporteRequest datos, int tipoConvenio) {
+		StringBuilder query = new StringBuilder();
+		query.append(", (SELECT COUNT(spb.ID_PAGO_BITACORA) ")
+		.append( generaFromJoin());
+		if(tipoConvenio == 1) {
+			query.append(JOIN_SVC_ORDEN_SERVICIO)
+			.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO);
+		}
+		if(tipoConvenio == 2) {
+			query.append(JOIN_SVT_CONVENIO_PF)
+			.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+		if (tipoConvenio == 3) {
+			query.append(JOIN_SVT_ESTATUS_CONVENIO_PF);
+		}
+		query.append(generaWhere(datos) + ") AS totalRegistros");
 		return query;
 	}
 
@@ -82,33 +142,33 @@ public class ConsultaGeneral {
 		return query;
 	}
 	private String queryODS (ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
+		return generaEcabezados(datos, formatoFecha, 1).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
 				.append(",'Pago de Orden de servicio' AS tipoIngreso ")
 				.append(", DATE_FORMAT(sos.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
-				.append("JOIN SVC_ORDEN_SERVICIO sos ON sos.CVE_FOLIO = spb.CVE_FOLIO ")
-				.append("JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO ")
+				.append(JOIN_SVC_ORDEN_SERVICIO)
+				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
 		.append(generaWhere(datos)).toString();
 	}
 	
 	private String queryConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha, 2).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(", 'Pago de Nuevos convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
-				.append("JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO ")
-				.append("JOIN SVC_ESTATUS_CONVENIO_PF secp ON secp.ID_ESTATUS_CONVENIO_PF = scp.ID_ESTATUS_CONVENIO ")
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos))
 				.append("AND spb.ID_FLUJO_PAGOS = 2 ").toString();
 	}
 	
 	private String queryRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha, 3).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
-				.append("JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO ")
-				.append("JOIN SVC_ESTATUS_CONVENIO_PF secp ON secp.ID_ESTATUS_CONVENIO_PF = scp.ID_ESTATUS_CONVENIO ")
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos))
 				.append("AND spb.ID_FLUJO_PAGOS =3 ").toString();
 	}
@@ -116,7 +176,7 @@ public class ConsultaGeneral {
 	private String generaWhere(ReporteRequest datos) {
 		StringBuilder where = new StringBuilder();
 		if(datos.getFolioODS()!=null) {
-			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append(WHERE_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioODS() + "'"); 
 			if(datos.getFolioNuevoConvenio()!=null)
 				where.append(",'" + datos.getFolioNuevoConvenio() + "'"); 
@@ -124,13 +184,13 @@ public class ConsultaGeneral {
 				where.append(",'" + datos.getFolioRenovacionConvenio() + "'"); 
 			where.append(")");
 		}else if(datos.getFolioNuevoConvenio()!=null) {
-			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append(WHERE_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioNuevoConvenio() + "'"); 
 			if(datos.getFolioRenovacionConvenio()!=null)
 				where.append(",'" + datos.getFolioRenovacionConvenio() + "'"); 
 			where.append(")");
 		}else if(datos.getFolioRenovacionConvenio()!=null) {
-			where.append(" WHERE spb.CVE_FOLIO IN(");
+			where.append(WHERE_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioRenovacionConvenio() + "'"); 
 			where.append(")");
 		}
