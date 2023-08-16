@@ -253,32 +253,6 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	}
 
 	@Override
-	public Response<Object> consultarTotalesFiltroPaginado(DatosRequest request, Authentication authentication)throws IOException {
-		ConsultaGeneral consultaGral = new ConsultaGeneral();
-		Gson gson = new Gson();
-		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
-		ReporteRequest reporteRequest = gson.fromJson(datosJson, ReporteRequest.class);
-		
-		String query = consultaGral.consultarTotalesGralFiltros(reporteRequest);
-		DatosRequest datosRequest= encodeQuery(query, request);
-			try {
-				log.info(CU069_NOMBRE);
-				log.info(query);
-				logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(), this.getClass().getPackage().toString(), "consultarDonados", CONSULTA, authentication);
-				Response<Object> response = providerRestTemplate.consumirServicio(datosRequest.getDatos(), urlDominio + CATALOGO_CONSULTAR, authentication);
-		
-				return MensajeResponseUtil.mensajeConsultaResponse(response, NO_SE_ENCONTRO_INFORMACION);
-			} catch (Exception e) {
-				log.error( CU069_NOMBRE );
-				log.error(CONSULTAR_FILTRO_PAGINADO );
-				log.error(ERROR_QUERY );
-				log.error( query);
-				logUtil.crearArchivoLog(Level.WARNING.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(),
-						this.getClass().getPackage().toString(), ERROR_QUERY +  query, CONSULTA, authentication);
-				throw new IOException("52", e.getCause());
-			}
-	}
-	@Override
 	public Response<Object> generarReporteBalanceCaja(DatosRequest request, Authentication authentication) throws IOException {
 		Gson gson = new Gson();
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
