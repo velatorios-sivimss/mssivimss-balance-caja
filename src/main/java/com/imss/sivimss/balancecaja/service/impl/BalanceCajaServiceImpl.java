@@ -12,7 +12,6 @@ import javax.xml.bind.DatatypeConverter;
 import com.imss.sivimss.balancecaja.beans.ModificarPago;
 import com.imss.sivimss.balancecaja.beans.RealizarCierre;
 import com.imss.sivimss.balancecaja.model.request.PagoRequest;
-import com.imss.sivimss.balancecaja.model.request.RealizarCierreRequest;
 import com.imss.sivimss.balancecaja.model.request.ReporteRequest;
 import com.imss.sivimss.balancecaja.model.request.UsuarioDto;
 import org.modelmapper.ModelMapper;
@@ -212,14 +211,15 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 	public Response<Object> realizarCierre(DatosRequest request, Authentication authentication) throws IOException {
 		String consulta = "";
 		try {
-			RealizarCierreRequest realizarCierreRequest= new Gson().fromJson(String.valueOf(request.getDatos().get(AppConstantes.DATOS)), RealizarCierreRequest.class);
+			ReporteRequest reporteRequest  = new Gson().fromJson(String.valueOf(request.getDatos().get(AppConstantes.DATOS)), ReporteRequest.class);
 			UsuarioDto usuarioDto = new Gson().fromJson((String) authentication.getPrincipal(), UsuarioDto.class);
 			logUtil.crearArchivoLog(Level.INFO.toString(), CU69_NAME +  this.getClass().getSimpleName(),	this.getClass().getPackage().toString(), "actualiza realizar cierre", AppConstantes.MODIFICACION, authentication);
-			ActualizarMultiRequest actualizarMultiRequest = new RealizarCierre().actualizaEstatusCierre(realizarCierreRequest, usuarioDto);
+			ActualizarMultiRequest actualizarMultiRequest = new RealizarCierre().actualizaEstatusCierre(reporteRequest, usuarioDto, formatoFecha);
 			consulta = actualizarMultiRequest.toString();
 			Response<Object>response = providerServiceRestTemplate.consumirServicio(actualizarMultiRequest, urlDominio.concat("/actualizar/multiples") , authentication);
 			return MensajeResponseUtil.mensajeResponseObject(response, MODIFICADO_CORRECTAMENTE);
 		} catch (Exception e) {
+			e.fillInStackTrace();
 			 log.error(AppConstantes.ERROR_QUERY.concat(consulta));
 			logUtil.crearArchivoLog(Level.SEVERE.toString(), this.getClass().getSimpleName(),this.getClass().getPackage().toString(), AppConstantes.ERROR_LOG_QUERY + consulta, AppConstantes.CONSULTA,
 					authentication);
