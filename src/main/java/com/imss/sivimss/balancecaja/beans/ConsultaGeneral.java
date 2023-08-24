@@ -159,7 +159,7 @@ public class ConsultaGeneral {
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos))
-				.append("AND spb.ID_FLUJO_PAGOS = 2 ").toString();
+				.append(" AND spb.ID_FLUJO_PAGOS = 2 ").toString();
 	}
 	
 	private String queryRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
@@ -170,7 +170,7 @@ public class ConsultaGeneral {
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos))
-				.append("AND spb.ID_FLUJO_PAGOS =3 ").toString();
+				.append(" AND spb.ID_FLUJO_PAGOS =3 ").toString();
 	}
 	
 	private String generaWhere(ReporteRequest datos) {
