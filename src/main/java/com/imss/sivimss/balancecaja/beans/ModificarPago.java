@@ -14,6 +14,7 @@ import java.util.Objects;
 
 public class ModificarPago {
     private static final Logger log = LoggerFactory.getLogger(ModificarPago.class);
+    public static final String CURRENT_DATE = "CURRENT_DATE()";
     public DatosRequest actualizaMotivo(PagoRequest request, String usuario){
         DatosRequest dr = new DatosRequest();
         Map<String, Object> parametro = new HashMap<>();
@@ -21,7 +22,7 @@ public class ModificarPago {
         String motivo = Objects.isNull(request.getMotivoModifica()) ? "" : "'" + request.getMotivoModifica() + "'";
         q.agregarParametroValues("DES_MOTIVO_MODIFICA", motivo);
         q.agregarParametroValues("ID_USUARIO_MODIFICA", "'"+usuario+"'");
-        q.agregarParametroValues("FEC_ACTUALIZACION", "NOW()");
+        q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_DATE);
         q.addWhere("ID_PAGO_DETALLE = " + request.getIdPagoDetalle());
         String query = q.obtenerQueryActualizar();
         String encoded = DatatypeConverter.printBase64Binary(query.getBytes());

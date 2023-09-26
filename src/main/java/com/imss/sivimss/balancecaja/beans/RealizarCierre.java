@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RealizarCierre {
 
-	private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP()";
+	public static final String CURRENT_DATE = "CURRENT_DATE()";
 	private static final String WHERE_SPB_CVE_FOLIO_IN = " WHERE spb.CVE_FOLIO IN(";
 	private static final String JOIN_SVC_ORDEN_SERVICIO = "JOIN SVC_ORDEN_SERVICIO sos ON sos.CVE_FOLIO = spb.CVE_FOLIO ";
 	private static final String JOIN_SVC_ESTATUS_ORDEN_SERVICIO = "JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO ";
@@ -31,8 +31,8 @@ public class RealizarCierre {
 		final QueryHelper q = new QueryHelper("UPDATE SVT_PAGO_DETALLE ");
 		q.agregarParametroValues("IND_ESTATUS_CAJA", String.valueOf(0));
 		q.agregarParametroValues("ID_USUARIO_MODIFICA", String.valueOf(usuarioDto.getIdUsuario()));
-		q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_TIMESTAMP);
-		q.agregarParametroValues("FEC_CIERRE_CAJA", CURRENT_TIMESTAMP);
+		q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_DATE);
+		q.agregarParametroValues("FEC_CIERRE_CAJA", CURRENT_DATE);
 		q.addWhere("ID_PAGO_DETALLE IN ( " + consultarGralFiltros(reporteRequest,formatoFecha) +")");
 		final String query = q.obtenerQueryActualizar();
 		log.info(" actualizarOrdenEntrada: " + query);
