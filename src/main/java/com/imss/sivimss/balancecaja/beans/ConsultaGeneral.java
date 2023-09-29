@@ -69,7 +69,8 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spd.IMP_PAGO,'')  AS ingresoNeto ")
 				.append(", IFNULL(spd.DES_MOTIVO_MODIFICA,'')  AS modifPago ")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
-				.append(", CASE WHEN spd.CVE_ESTATUS = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
+				//.append(", CASE WHEN spd.CVE_ESTATUS = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
+				//.append(", CASE WHEN sos.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(importeTotal(datos, tipoConvenio))
 				.append(totalIngreso(datos, tipoConvenio))
 				.append(totalRegistros(datos, tipoConvenio));
@@ -146,16 +147,19 @@ public class ConsultaGeneral {
 		return generaEcabezados(datos, formatoFecha, 1).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
 				.append(",'Pago de Orden de servicio' AS tipoIngreso ")
 				.append(", DATE_FORMAT(sos.FEC_ALTA,'" + formatoFecha + AS_FECHA)
+				.append(", CASE WHEN sos.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVC_ORDEN_SERVICIO)
 				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
-		.append(generaWhere(datos)).toString();
+		.append(generaWhere(datos))
+		.append(" AND spb.ID_FLUJO_PAGOS = 1 ").toString();
 	}
 	
 	private String queryConvenios(ReporteRequest datos, String formatoFecha) {
 		return generaEcabezados(datos, formatoFecha, 2).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(", 'Pago de Nuevos convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
+				.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
@@ -167,6 +171,7 @@ public class ConsultaGeneral {
 		return generaEcabezados(datos, formatoFecha, 3).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
+				.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
