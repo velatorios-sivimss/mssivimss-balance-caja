@@ -48,8 +48,9 @@ public class ConsultaGeneral {
 		}
 		  return query.toString();
 	}
+	//
 	public String consultarTotalesGralFiltros(ReporteRequest datos) {
-	return "SELECT SUM(spb.DESC_VALOR) AS totalImporte "
+		return "SELECT SUM(spb.DESC_VALOR) AS totalImporte "
 	  		+ ", SUM (spd.IMP_PAGO) AS totalIngreso "
 	  		+ ", COUNT(spb.ID_PAGO_BITACORA) AS totalRegistros "
 	  		+ generaFromJoin()
@@ -201,8 +202,12 @@ public class ConsultaGeneral {
 			where.append(" AND sv.ID_VELATORIO = " + datos.getIdVelatorio());
 		if(datos.getIdMetodoPago()!= null)
 			where.append(" AND smp.ID_METODO_PAGO = " + datos.getIdMetodoPago());
-		if(datos.getFecha()!= null)
-			where.append(" AND DATE_FORMAT(spb.FEC_ODS,'YY-MM-DD') = DATE_FORMAT('" + datos.getFecha() +"','YY-MM-DD')");
+		if(datos.getFecha()!= null) {
+			where.append(" AND DATE_FORMAT(spb.FEC_ODS, '%Y-%m-%d') = DATE_FORMAT('" + datos.getFecha() +"', '%Y-%m-%d')");
+		}else {
+			where.append(" AND DATE_FORMAT(spb.FEC_ODS, '%Y-%m-%d') = DATE_FORMAT(CURDATE(), '%Y-%m-%d')");
+		}
+			
 		
 		return where.toString();
 	}

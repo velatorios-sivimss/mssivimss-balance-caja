@@ -258,30 +258,30 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		ReporteRequest reporteRequest = gson.fromJson(datosJson, ReporteRequest.class);
 		ConsultaGeneral consultaGral = new ConsultaGeneral();
-		String query = consultaGral.consultarTotalesGralFiltros(reporteRequest);
-
+	//	String query = consultaGral.consultarTotalesGralFiltros(reporteRequest);
+		 String query = consultaGral.consultarGralFiltros(reporteRequest, formatoFecha);
 		try {
 			log.info( CU069_NOMBRE );
 			log.info( GENERAR_DOCUMENTO );
-			log.info( query);
-			DatosRequest datosRequest= encodeQuery(query, request);
+		/*	DatosRequest datosRequest= encodeQuery(query, request);
 			Response<Object> response = providerRestTemplate.consumirServicio(datosRequest, urlDominio + CATALOGO_CONSULTAR, authentication);
 
 			String json = responseToJson(response.getDatos().toString());
 
-			ReporteRequest reporteTotales = gson.fromJson(json, ReporteRequest.class);
+			ReporteRequest reporteTotales = gson.fromJson(json, ReporteRequest.class); */
 			
 			Map<String, Object> envioDatos = new HashMap<>();
-			query = consultaGral.consultarGralFiltros(reporteRequest, formatoFecha);
+			
+			log.info( query);
 			envioDatos.put("query", query);
-			envioDatos.put("totalImporte", reporteTotales.getTotalImporte());
+		/*	envioDatos.put("totalImporte", reporteTotales.getTotalImporte());
 			envioDatos.put("totalIngreso", reporteTotales.getTotalIngreso());
 			envioDatos.put("totalRegistros", reporteTotales.getTotalRegistros());
-			envioDatos.put(TIPO_REPORTE, reporteRequest.getTipoReporte());
+			envioDatos.put(TIPO_REPORTE, reporteRequest.getTipoReporte()); */
 			envioDatos.put(RUTA_NOMBRE_REPORTE, reporteBalanceCaja);
 			logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + GENERAR_DOCUMENTO + this.getClass().getSimpleName(),
 					this.getClass().getPackage().toString(), "generarDocumento", GENERA_DOCUMENTO, authentication);
-			response = providerServiceRestTemplate.consumirServicioReportes(envioDatos, urlReportes, authentication);
+			Response<Object>response = providerServiceRestTemplate.consumirServicioReportes(envioDatos, urlReportes, authentication);
 			return MensajeResponseUtil.mensajeConsultaResponse(response, ERROR_AL_DESCARGAR_DOCUMENTO);
 		} catch (Exception e) {
 			log.error( CU069_NOMBRE );
