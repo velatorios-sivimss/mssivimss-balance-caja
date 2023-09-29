@@ -27,5 +27,5 @@ public class ReporteRequest {
 	private String totalImporte;
 	private String totalIngreso;
 	private String totalRegistros;
-	private Integer idTipoConvenio;
+	private Integer IdTipoConvenio;
 }
