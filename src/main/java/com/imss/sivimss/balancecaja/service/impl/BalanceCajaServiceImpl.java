@@ -239,7 +239,9 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 				log.info(CU069_NOMBRE);
 				log.info(query);
 				logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + CONSULTAR_FILTRO_PAGINADO + this.getClass().getSimpleName(), this.getClass().getPackage().toString(), "consultarDonados", CONSULTA, authentication);
-				Response<Object>  response = providerRestTemplate.consumirServicio(datosRequest.getDatos(), urlDominio + CONSULTAR_PAGINADO, authentication);
+				MensajeResponseUtil.mensajeConsultaResponse(providerRestTemplate.consumirServicio(consultaGral.cerrarEstatusCaja(), urlDominio + AppConstantes.CATALOGO_ACTUALIZAR, authentication),"5");
+				logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + this.getClass().getSimpleName(), this.getClass().getPackage().toString(), "ESTATUS ACTUALIZADOS CORRECTAMENTE", "ACTUALIZACION", authentication);
+				Response<Object>  response = providerRestTemplate.consumirServicio(datosRequest.getDatos(), urlDominio + CONSULTAR_PAGINADO , authentication);
 				return MensajeResponseUtil.mensajeConsultaResponse(response, NO_SE_ENCONTRO_INFORMACION);
 			} catch (Exception e) {
 				log.error( CU069_NOMBRE );

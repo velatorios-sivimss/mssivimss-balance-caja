@@ -1,13 +1,24 @@
 package com.imss.sivimss.balancecaja.beans;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.bind.DatatypeConverter;
+
 import com.imss.sivimss.balancecaja.model.request.ReporteRequest;
+import com.imss.sivimss.balancecaja.util.AppConstantes;
+import com.imss.sivimss.balancecaja.util.DatosRequest;
+import com.imss.sivimss.balancecaja.util.QueryHelper;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -68,9 +79,8 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spb.DESC_VALOR,'')  AS importe ")
 				.append(", IFNULL(spd.IMP_PAGO,'')  AS ingresoNeto ")
 				.append(", IFNULL(spd.DES_MOTIVO_MODIFICA,'')  AS modifPago ")
-				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
-				//.append(", CASE WHEN spd.CVE_ESTATUS = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
-				//.append(", CASE WHEN sos.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
+				.append(", IFNULL(DATE_FORMAT(spd.FEC_CIERRE_CAJA,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
+				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
 				.append(importeTotal(datos, tipoConvenio))
 				.append(totalIngreso(datos, tipoConvenio))
 				.append(totalRegistros(datos, tipoConvenio));
@@ -147,7 +157,7 @@ public class ConsultaGeneral {
 		return generaEcabezados(datos, formatoFecha, 1).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus ")
 				.append(",'Pago de Orden de servicio' AS tipoIngreso ")
 				.append(", DATE_FORMAT(sos.FEC_ALTA,'" + formatoFecha + AS_FECHA)
-				.append(", CASE WHEN sos.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
+				//.append(", CASE WHEN sos.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVC_ORDEN_SERVICIO)
 				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
@@ -159,7 +169,7 @@ public class ConsultaGeneral {
 		return generaEcabezados(datos, formatoFecha, 2).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(", 'Pago de Nuevos convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
-				.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
+				//.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
@@ -171,7 +181,7 @@ public class ConsultaGeneral {
 		return generaEcabezados(datos, formatoFecha, 3).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
-				.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
+				//.append(", CASE WHEN scp.FEC_ALTA = CURDATE() THEN 'Abierto' ELSE 'Cerrado' END  AS estatusCaja ")
 				.append(generaFromJoin())
 				.append(JOIN_SVT_CONVENIO_PF)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
@@ -215,5 +225,26 @@ public class ConsultaGeneral {
 			
 		
 		return where.toString();
+	}
+
+	public DatosRequest cerrarEstatusCaja() {
+		DatosRequest request = new DatosRequest();
+		Map<String, Object> parametro = new HashMap<>();
+		final QueryHelper q = new QueryHelper("UPDATE SVT_PAGO_DETALLE ");
+		q.agregarParametroValues("IND_ESTATUS_CAJA", String.valueOf(0));
+		//q.agregarParametroValues("ID_USUARIO_MODIFICA", String.valueOf(usuarioDto.getIdUsuario()));
+		q.agregarParametroValues("FEC_ACTUALIZACION", "CURRENT_DATE()");
+		q.agregarParametroValues("FEC_CIERRE_CAJA", "CURRENT_TIMESTAMP");
+		q.addWhere("ID_PAGO_DETALLE IN ( SELECT "
+				+ "spd.ID_PAGO_DETALLE "
+				+ "FROM SVT_PAGO_DETALLE spd "
+				+ "JOIN SVT_PAGO_BITACORA spb ON spd.ID_PAGO_BITACORA = spb.ID_PAGO_BITACORA "
+				+ "WHERE  spb.FEC_ODS < CURDATE() AND spd.IND_ESTATUS_CAJA= 1) ");
+		final String query = q.obtenerQueryActualizar();
+		log.info("-->"+query);
+		 String encoded = DatatypeConverter.printBase64Binary(query.getBytes(StandardCharsets.UTF_8));
+			parametro.put(AppConstantes.QUERY, encoded);
+	        request.setDatos(parametro);
+		return request;
 	}
 }
