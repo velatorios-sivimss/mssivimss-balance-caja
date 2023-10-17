@@ -49,7 +49,7 @@ public class ConsultaGeneral {
 		  return query.toString();
 	}
 	public String consultarTotalesGralFiltros(ReporteRequest datos) {
-	return "SELECT SUM(spb.DESC_VALOR) AS totalImporte "
+	return "SELECT SUM(spb.IMP_VALOR) AS totalImporte "
 	  		+ ", SUM (spd.IMP_PAGO) AS totalIngreso "
 	  		+ ", COUNT(spb.ID_PAGO_BITACORA) AS totalRegistros "
 	  		+ generaFromJoin()
@@ -63,10 +63,10 @@ public class ConsultaGeneral {
 				.append(", IFNULL(sv.DES_VELATORIO,'') AS velatorio")
 				.append(", IFNULL(spb.CVE_FOLIO,'') AS folio ")
 				.append(", IFNULL(sep.DES_ESTATUS,'') AS estatusPago")
-				.append(", IFNULL(smp.DESC_METODO_PAGO,'') AS metodoPago ")
-				.append(", IFNULL(spb.DESC_VALOR,'')  AS importe ")
+				.append(", IFNULL(smp.DES_METODO_PAGO,'') AS metodoPago ")
+				.append(", IFNULL(spb.IMP_VALOR,'')  AS importe ")
 				.append(", IFNULL(spd.IMP_PAGO,'')  AS ingresoNeto ")
-				.append(", IFNULL(spd.DES_MOTIVO_MODIFICA,'')  AS modifPago ")
+				.append(", IFNULL(spd.REF_MOTIVO_MODIFICA,'')  AS modifPago ")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre ")
 				.append(", CASE WHEN spd.CVE_ESTATUS = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja ")
 				.append(importeTotal(datos, tipoConvenio))
@@ -78,7 +78,7 @@ public class ConsultaGeneral {
 
 	private StringBuilder importeTotal(ReporteRequest datos, int tipoConvenio) {
 		StringBuilder query = new StringBuilder();
-				query.append(", (SELECT SUM(spb.DESC_VALOR) ")
+				query.append(", (SELECT SUM(spb.IMP_VALOR) ")
 			.append( generaFromJoin());
 		if(tipoConvenio == 1) {
 			query.append(JOIN_SVC_ORDEN_SERVICIO)
