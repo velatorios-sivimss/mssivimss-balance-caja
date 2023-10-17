@@ -20,7 +20,7 @@ public class ModificarPago {
         Map<String, Object> parametro = new HashMap<>();
         final QueryHelper q = new QueryHelper("UPDATE SVT_PAGO_DETALLE");
         String motivo = Objects.isNull(request.getMotivoModifica()) ? "" : "'" + request.getMotivoModifica() + "'";
-        q.agregarParametroValues("DES_MOTIVO_MODIFICA", motivo);
+        q.agregarParametroValues("REF_MOTIVO_MODIFICA", motivo);
         q.agregarParametroValues("ID_USUARIO_MODIFICA", "'"+usuario+"'");
         q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_DATE);
         q.addWhere("ID_PAGO_DETALLE = " + request.getIdPagoDetalle());
