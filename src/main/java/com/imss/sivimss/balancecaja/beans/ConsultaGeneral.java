@@ -23,7 +23,7 @@ public class ConsultaGeneral {
 	private Integer idVelatorio;
 	
 	private static final String AS_FECHA = "') AS fecha \r\n";
-	private static final String WHERE_SPB_CVE_FOLIO_IN = " spb.CVE_FOLIO IN(";
+	private static final String AND_SPB_CVE_FOLIO_IN = " AND spb.CVE_FOLIO IN(";
 	private static final String JOIN_SVC_ORDEN_SERVICIO = "JOIN SVC_ORDEN_SERVICIO sos ON sos.CVE_FOLIO = spb.CVE_FOLIO \r\n";
 	private static final String JOIN_SVC_ESTATUS_ORDEN_SERVICIO = "JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO \r\n";
 	private static final String JOIN_SVT_CONVENIO_PF= "JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO \r\n";
@@ -161,10 +161,10 @@ public class ConsultaGeneral {
 	private String generaWhere(ReporteRequest datos, int tipoConvenio, String formatoFecha) {
 		StringBuilder where = new StringBuilder();
 		
-		where.append("WHERE spd.CVE_ESTATUS = 4 \r\n");
+		where.append(" WHERE spd.CVE_ESTATUS = 4 \r\n");
 		
 		if(datos.getFolioODS()!=null) {
-			where.append(WHERE_SPB_CVE_FOLIO_IN);
+			where.append(AND_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioODS() + "'\r\n"); 
 			if(datos.getFolioNuevoConvenio()!=null)
 				where.append(",'" + datos.getFolioNuevoConvenio() + "'\r\n"); 
@@ -172,13 +172,13 @@ public class ConsultaGeneral {
 				where.append(",'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
 			where.append(")");
 		}else if(datos.getFolioNuevoConvenio()!=null) {
-			where.append(WHERE_SPB_CVE_FOLIO_IN);
+			where.append(AND_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioNuevoConvenio() + "'\r\n"); 
 			if(datos.getFolioRenovacionConvenio()!=null)
 				where.append(",'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
 			where.append(")");
 		}else if(datos.getFolioRenovacionConvenio()!=null) {
-			where.append(WHERE_SPB_CVE_FOLIO_IN);
+			where.append(AND_SPB_CVE_FOLIO_IN);
 			where.append("'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
 			where.append(")");
 		}
@@ -194,7 +194,7 @@ public class ConsultaGeneral {
 					+ "DATE_FORMAT('" + datos.getFecha() +"','" + formatoFecha +"')\r\n");
 		
 		if(datos.getIdTipoConvenio() != null && datos.getIdTipoConvenio() != 0) {
-			where.append(" AND spb.ID_FLUJO_PAGOS = " + tipoConvenio + "\r\n");
+			where.append(" AND spb.ID_FLUJO_PAGOS = " + tipoConvenio + " \r\n");
 		}
 		
 		return where.toString();
