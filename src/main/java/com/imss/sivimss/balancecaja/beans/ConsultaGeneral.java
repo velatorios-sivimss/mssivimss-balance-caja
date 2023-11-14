@@ -52,55 +52,62 @@ public class ConsultaGeneral {
 	}
 
 	public String consultarTotalesGralFiltros(ReporteRequest datos, String formatoFecha) {
-			String totalRegistros = "";
-			String totalImporte = "";
-			String totalIngreso = "";
-			if(datos.getIdTipoConvenio() == null) {
-				totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + PARENT_INV 
-					+ queryTotalConvenios(datos, formatoFecha) + PARENT_INV 
-					+ queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
-
-				totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + PARENT_INV 
-					+ queryImporteTotalConv(datos, formatoFecha) + PARENT_INV 
-					+ queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-
-				totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + PARENT_INV 
-					+ queryIngresoTotalConv(datos, formatoFecha) + PARENT_INV 
-					+ queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-			}
-			else if(datos.getIdTipoConvenio() == 1) {
-				totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + FROM_DUAL; 
-				totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + FROM_DUAL; 
-				totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + FROM_DUAL; 
-			}
-			else if(datos.getIdTipoConvenio() == 2) {
-				totalRegistros = SELECT + queryTotalConvenios(datos, formatoFecha) + FROM_DUAL; 
-				totalImporte = SELECT + queryImporteTotalConv(datos, formatoFecha) + FROM_DUAL; 
-				totalIngreso = SELECT + queryIngresoTotalConv(datos, formatoFecha) + FROM_DUAL; 
-			}
-			else if(datos.getIdTipoConvenio() == 3) {
-				totalRegistros = SELECT + queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
-				totalImporte = SELECT + queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-				totalIngreso = SELECT + queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-			}
-			return SELECT + totalRegistros+ ") AS totalRegistros ,(" + totalImporte +") AS totalImporte, (" + totalIngreso + ") AS totalIngreso FROM DUAL";
+			return SELECT + queryTotalRegistros(datos, formatoFecha) + ") AS totalRegistros ,(" + queryTotalImporte(datos, formatoFecha) +") AS totalImporte, (" + queryTotalIngreso(datos, formatoFecha) + ") AS totalIngreso FROM DUAL";
 	}
-	
-	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
-		StringBuilder query = new StringBuilder();
-
-		String totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + PARENT_INV 
+	private String queryTotalRegistros (ReporteRequest datos, String formatoFecha) {
+		if(datos.getIdTipoConvenio() == null) {
+			return SELECT + queryTotalODS(datos, formatoFecha) + PARENT_INV 
 				+ queryTotalConvenios(datos, formatoFecha) + PARENT_INV 
 				+ queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
-
-		String totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + PARENT_INV 
+		}
+		else if(datos.getIdTipoConvenio() == 1) {
+			return SELECT + queryTotalODS(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 2) {
+			return SELECT + queryTotalConvenios(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 3) {
+			return SELECT + queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
+		}
+		return "";
+	}
+	private String queryTotalImporte (ReporteRequest datos, String formatoFecha) {
+		if(datos.getIdTipoConvenio() == null) {
+			return SELECT + queryImporteTotalODS(datos, formatoFecha) + PARENT_INV 
 				+ queryImporteTotalConv(datos, formatoFecha) + PARENT_INV 
 				+ queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-
-		String totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + PARENT_INV 
+		}
+		else if(datos.getIdTipoConvenio() == 1) { 
+			return SELECT + queryImporteTotalODS(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 2) {
+			return SELECT + queryImporteTotalConv(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 3) {
+			return SELECT + queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+		}
+		return "";
+	}
+	private String queryTotalIngreso (ReporteRequest datos, String formatoFecha) {
+		if(datos.getIdTipoConvenio() == null) {
+			return SELECT + queryIngresoTotalODS(datos, formatoFecha) + PARENT_INV 
 				+ queryIngresoTotalConv(datos, formatoFecha) + PARENT_INV 
 				+ queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
-		
+		}
+		else if(datos.getIdTipoConvenio() == 1) {
+			return SELECT + queryIngresoTotalODS(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 2) {
+			return SELECT + queryIngresoTotalConv(datos, formatoFecha) + FROM_DUAL; 
+		}
+		else if(datos.getIdTipoConvenio() == 3) {
+			return SELECT + queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+		}
+		return "";
+	}
+	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
+		StringBuilder query = new StringBuilder();
+	
 		query.append("SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle \r\n")
 				.append(", IFNULL(sd.DES_DELEGACION,'') AS delegacion \r\n")
 				.append(", IFNULL(sv.DES_VELATORIO,'') AS velatorio \r\n")
@@ -112,9 +119,9 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spd.REF_MOTIVO_MODIFICA,'')  AS modifPago \r\n")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre \r\n")
 				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja \r\n")
-				.append(", (" + SELECT + totalImporte +")) AS totalImporte ")
-				.append(", (" + SELECT + totalIngreso + ")) AS totalIngreso ")
-				.append(", (" + SELECT + totalRegistros+ ")) AS totalRegistros ");
+				.append(", (" + SELECT + queryTotalImporte(datos, formatoFecha)  +")) AS totalImporte ")
+				.append(", (" + SELECT + queryTotalIngreso(datos, formatoFecha) + ")) AS totalIngreso ")
+				.append(", (" + SELECT + queryTotalRegistros(datos, formatoFecha) + ")) AS totalRegistros ");
 		return query;
 	}
 
