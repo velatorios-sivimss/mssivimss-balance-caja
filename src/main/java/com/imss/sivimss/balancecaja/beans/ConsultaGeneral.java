@@ -28,7 +28,9 @@ public class ConsultaGeneral {
 	private static final String JOIN_SVC_ESTATUS_ORDEN_SERVICIO = "JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO \r\n";
 	private static final String JOIN_SVT_CONVENIO_PF= "JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO \r\n";
 	private static final String JOIN_SVT_ESTATUS_CONVENIO_PF = "JOIN SVC_ESTATUS_CONVENIO_PF secp ON secp.ID_ESTATUS_CONVENIO_PF = scp.ID_ESTATUS_CONVENIO \r\n";
-	
+	private static final String SELECT = "SELECT (";
+	private static final String FROM_DUAL = ") FROM DUAL ";
+	private static final String PARENT_INV = ") + (";
 	public ConsultaGeneral(Object obj) {}
 	
 	public String consultarGralFiltros(ReporteRequest datos, String formatoFecha) {
@@ -48,16 +50,57 @@ public class ConsultaGeneral {
 		}
 		  return query.toString();
 	}
+
 	public String consultarTotalesGralFiltros(ReporteRequest datos, String formatoFecha) {
-	return "SELECT SUM(spb.IMP_VALOR) AS totalImporte "
-	  		+ ", SUM(spd.IMP_PAGO) AS totalIngreso "
-	  		+ ", COUNT(spb.ID_PAGO_BITACORA) AS totalRegistros "
-	  		+ generaFromJoin()
-	  		+ generaWhere(datos, datos.getIdTipoConvenio(), formatoFecha);
+			String totalRegistros = "";
+			String totalImporte = "";
+			String totalIngreso = "";
+			if(datos.getIdTipoConvenio() == null) {
+				totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + PARENT_INV 
+					+ queryTotalConvenios(datos, formatoFecha) + PARENT_INV 
+					+ queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
+
+				totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + PARENT_INV 
+					+ queryImporteTotalConv(datos, formatoFecha) + PARENT_INV 
+					+ queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+
+				totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + PARENT_INV 
+					+ queryIngresoTotalConv(datos, formatoFecha) + PARENT_INV 
+					+ queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+			}
+			else if(datos.getIdTipoConvenio() == 1) {
+				totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + FROM_DUAL; 
+				totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + FROM_DUAL; 
+				totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + FROM_DUAL; 
+			}
+			else if(datos.getIdTipoConvenio() == 2) {
+				totalRegistros = SELECT + queryTotalConvenios(datos, formatoFecha) + FROM_DUAL; 
+				totalImporte = SELECT + queryImporteTotalConv(datos, formatoFecha) + FROM_DUAL; 
+				totalIngreso = SELECT + queryIngresoTotalConv(datos, formatoFecha) + FROM_DUAL; 
+			}
+			else if(datos.getIdTipoConvenio() == 3) {
+				totalRegistros = SELECT + queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
+				totalImporte = SELECT + queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+				totalIngreso = SELECT + queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+			}
+			return SELECT + totalRegistros+ ") AS totalRegistros ,(" + totalImporte +") AS totalImporte, (" + totalIngreso + ") AS totalIngreso FROM DUAL";
 	}
 	
-	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha, int tipoConvenio) {
+	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
 		StringBuilder query = new StringBuilder();
+
+		String totalRegistros = SELECT + queryTotalODS(datos, formatoFecha) + PARENT_INV 
+				+ queryTotalConvenios(datos, formatoFecha) + PARENT_INV 
+				+ queryTotalRenovacionConvenios(datos, formatoFecha) + FROM_DUAL; 
+
+		String totalImporte = SELECT + queryImporteTotalODS(datos, formatoFecha) + PARENT_INV 
+				+ queryImporteTotalConv(datos, formatoFecha) + PARENT_INV 
+				+ queryImporteTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+
+		String totalIngreso = SELECT + queryIngresoTotalODS(datos, formatoFecha) + PARENT_INV 
+				+ queryIngresoTotalConv(datos, formatoFecha) + PARENT_INV 
+				+ queryIngresoTotalRenov(datos, formatoFecha) + FROM_DUAL; 
+		
 		query.append("SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle \r\n")
 				.append(", IFNULL(sd.DES_DELEGACION,'') AS delegacion \r\n")
 				.append(", IFNULL(sv.DES_VELATORIO,'') AS velatorio \r\n")
@@ -69,55 +112,34 @@ public class ConsultaGeneral {
 				.append(", IFNULL(spd.REF_MOTIVO_MODIFICA,'')  AS modifPago \r\n")
 				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre \r\n")
 				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja \r\n")
-				.append(importeTotal(datos, tipoConvenio, formatoFecha))
-				.append(totalIngreso(datos, tipoConvenio, formatoFecha))
-				.append(totalRegistros(datos, tipoConvenio, formatoFecha));
+				.append(", (" + SELECT + totalImporte +")) AS totalImporte ")
+				.append(", (" + SELECT + totalIngreso + ")) AS totalIngreso ")
+				.append(", (" + SELECT + totalRegistros+ ")) AS totalRegistros ");
 		return query;
 	}
 
 
-	private StringBuilder importeTotal(ReporteRequest datos, int tipoConvenio, String formatoFecha) {
+
+	private StringBuilder importeTotal() {
 		StringBuilder query = new StringBuilder();
-				query.append(", (SELECT SUM(spb.IMP_VALOR) ")
+				query.append("SELECT IFNULL(SUM(spb.IMP_VALOR),0) ")
 			.append( generaFromJoin());
-		
-		if(datos.getIdTipoConvenio() != null && datos.getIdTipoConvenio() != 0) {
-			
-			query.append("AND spb.ID_FLUJO_PAGOS = " + datos.getIdTipoConvenio());
-			
-		}
-			query.append(generaWhere(datos, tipoConvenio, formatoFecha) + ") AS totalImporte ");
 				return query;
 	}
-	private StringBuilder totalIngreso (ReporteRequest datos, int tipoConvenio, String formatoFecha) {
+	
+	private StringBuilder totalRegistros () {
 		StringBuilder query = new StringBuilder();
-		query.append(", (SELECT SUM(spd.IMP_PAGO)")
+		query.append("SELECT COUNT(spb.ID_PAGO_BITACORA)")
 		.append( generaFromJoin());
-		
-		if(datos.getIdTipoConvenio() != null && datos.getIdTipoConvenio() != 0) {
-			
-			query.append("AND spb.ID_FLUJO_PAGOS = " + datos.getIdTipoConvenio());
-			
-		}
-
-		query.append(generaWhere(datos,tipoConvenio,formatoFecha) +  ") AS totalIngreso ");
-		return query;
-	}
-	private StringBuilder totalRegistros (ReporteRequest datos, int tipoConvenio, String formatoFecha) {
-		StringBuilder query = new StringBuilder();
-		query.append(", (SELECT COUNT(spb.ID_PAGO_BITACORA) ")
-		.append( generaFromJoin());
-		
-		if(datos.getIdTipoConvenio() != null && datos.getIdTipoConvenio() != 0) {
-			
-			query.append("AND spb.ID_FLUJO_PAGOS = " + datos.getIdTipoConvenio());
-			
-		}
-		
-		query.append(generaWhere(datos, tipoConvenio,formatoFecha) + ") AS totalRegistros");
 		return query;
 	}
 
+	private StringBuilder totalIngreso () {
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT IFNULL(SUM(spd.IMP_PAGO),0) ")
+		.append( generaFromJoin());
+		return query;
+	}
 	private StringBuilder generaFromJoin() {
 		StringBuilder query = new StringBuilder();	
 		query.append(" FROM SVT_PAGO_BITACORA spb  ")
@@ -128,8 +150,64 @@ public class ConsultaGeneral {
 		.append(" JOIN SVC_ESTATUS_PAGO sep ON sep.ID_ESTATUS_PAGO = spb.CVE_ESTATUS_PAGO \r\n");	
 		return query;
 	}
+
+	private String queryImporteTotalODS (ReporteRequest datos, String formatoFecha) {
+		return importeTotal()
+				.append(JOIN_SVC_ORDEN_SERVICIO)
+				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
+				.append(generaWhere(datos, 1,formatoFecha)).toString();
+	}
+	private String queryImporteTotalConv (ReporteRequest datos, String formatoFecha) {
+		return importeTotal()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 2, formatoFecha)).toString();
+	}
+	private String queryImporteTotalRenov (ReporteRequest datos, String formatoFecha) {
+		return importeTotal()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 3, formatoFecha)).toString();
+	}
+	private String queryTotalODS (ReporteRequest datos, String formatoFecha) {
+		return totalRegistros()
+				.append(JOIN_SVC_ORDEN_SERVICIO)
+				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
+				.append(generaWhere(datos, 1,formatoFecha)).toString();
+	}
+	private String queryTotalConvenios(ReporteRequest datos, String formatoFecha) {
+		return totalRegistros()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 2, formatoFecha)).toString();
+	}
+	private String queryTotalRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
+		return totalRegistros()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 3, formatoFecha)).toString();
+	}
+
+	private String queryIngresoTotalODS (ReporteRequest datos, String formatoFecha) {
+		return totalIngreso()
+				.append(JOIN_SVC_ORDEN_SERVICIO)
+				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
+				.append(generaWhere(datos, 1,formatoFecha)).toString();
+	}
+	private String queryIngresoTotalConv(ReporteRequest datos, String formatoFecha) {
+		return totalIngreso()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 2, formatoFecha)).toString();
+	}
+	private String queryIngresoTotalRenov(ReporteRequest datos, String formatoFecha) {
+		return totalIngreso()
+				.append(JOIN_SVT_CONVENIO_PF)
+				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
+				.append(generaWhere(datos, 3, formatoFecha)).toString();
+	}
 	private String queryODS (ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha, 1).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus \r\n")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(seos.DES_ESTATUS,'')  AS estatus \r\n")
 				.append(",'Pago de Orden de servicio' AS tipoIngreso \r\n")
 				.append(", DATE_FORMAT(sos.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
@@ -137,9 +215,8 @@ public class ConsultaGeneral {
 				.append(JOIN_SVC_ESTATUS_ORDEN_SERVICIO)
 		.append(generaWhere(datos, 1,formatoFecha)).toString();
 	}
-	
 	private String queryConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha, 2).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(", 'Pago de Nuevos convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
@@ -147,9 +224,9 @@ public class ConsultaGeneral {
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 2, formatoFecha)).toString();
 	}
-	
+
 	private String queryRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
-		return generaEcabezados(datos, formatoFecha, 3).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
+		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
@@ -157,29 +234,34 @@ public class ConsultaGeneral {
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 3, formatoFecha)).toString();
 	}
+
 	
 	private String generaWhere(ReporteRequest datos, int tipoConvenio, String formatoFecha) {
 		StringBuilder where = new StringBuilder();
 		
-		where.append(" WHERE spd.CVE_ESTATUS = 4 \r\n");
+		where.append(" WHERE \r\n");
+		if(tipoConvenio == 1)
+			where.append(" sos.ID_ESTATUS_ORDEN_SERVICIO  IN(2,4) AND spd.CVE_ESTATUS IN (4,5,8) ");
+		if(tipoConvenio == 2 || tipoConvenio == 3 )
+			where.append(" scp.ID_ESTATUS_CONVENIO = 2 AND spd.CVE_ESTATUS IN (4,5)");
 		
 		if(datos.getFolioODS()!=null) {
 			where.append(AND_SPB_CVE_FOLIO_IN);
-			where.append("'" + datos.getFolioODS() + "'\r\n"); 
+			where.append("'" + datos.getFolioODS() + "' "); 
 			if(datos.getFolioNuevoConvenio()!=null)
-				where.append(",'" + datos.getFolioNuevoConvenio() + "'\r\n"); 
+				where.append(",'" + datos.getFolioNuevoConvenio() + "' "); 
 			if(datos.getFolioRenovacionConvenio()!=null)
-				where.append(",'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
+				where.append(",'" + datos.getFolioRenovacionConvenio() + "' "); 
 			where.append(")");
 		}else if(datos.getFolioNuevoConvenio()!=null) {
 			where.append(AND_SPB_CVE_FOLIO_IN);
-			where.append("'" + datos.getFolioNuevoConvenio() + "'\r\n"); 
+			where.append("'" + datos.getFolioNuevoConvenio() + "' "); 
 			if(datos.getFolioRenovacionConvenio()!=null)
-				where.append(",'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
+				where.append(",'" + datos.getFolioRenovacionConvenio() + "' "); 
 			where.append(")");
 		}else if(datos.getFolioRenovacionConvenio()!=null) {
 			where.append(AND_SPB_CVE_FOLIO_IN);
-			where.append("'" + datos.getFolioRenovacionConvenio() + "'\r\n"); 
+			where.append("'" + datos.getFolioRenovacionConvenio() + "' "); 
 			where.append(")");
 		}
 
@@ -193,7 +275,7 @@ public class ConsultaGeneral {
 			where.append(" AND DATE_FORMAT(spb.FEC_ODS,'" + formatoFecha +"') = "
 					+ "DATE_FORMAT('" + datos.getFecha() +"','" + formatoFecha +"')\r\n");
 		
-		if(datos.getIdTipoConvenio() != null && datos.getIdTipoConvenio() != 0) {
+		if( tipoConvenio != 0) {
 			where.append(" AND spb.ID_FLUJO_PAGOS = " + tipoConvenio + " \r\n");
 		}
 		
