@@ -279,6 +279,9 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 			envioDatos.put("totalRegistros", reporteTotales.getTotalRegistros());
 			envioDatos.put(TIPO_REPORTE, reporteRequest.getTipoReporte());
 			envioDatos.put(RUTA_NOMBRE_REPORTE, reporteBalanceCaja);
+			if (reporteRequest.getTipoReporte().equals("xls")) {
+				envioDatos.put("IS_IGNORE_PAGINATION", true);
+			}
 			logUtil.crearArchivoLog(Level.INFO.toString(), CU069_NOMBRE + GENERAR_DOCUMENTO + this.getClass().getSimpleName(),
 					this.getClass().getPackage().toString(), "generarDocumento", GENERA_DOCUMENTO, authentication);
 			response = providerServiceRestTemplate.consumirServicioReportes(envioDatos, urlReportes, authentication);
