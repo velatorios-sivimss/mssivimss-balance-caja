@@ -26,7 +26,8 @@ public class ConsultaGeneral {
 	private static final String AND_SPB_CVE_FOLIO_IN = " AND spb.CVE_FOLIO IN(";
 	private static final String JOIN_SVC_ORDEN_SERVICIO = "JOIN SVC_ORDEN_SERVICIO sos ON sos.CVE_FOLIO = spb.CVE_FOLIO \r\n";
 	private static final String JOIN_SVC_ESTATUS_ORDEN_SERVICIO = "JOIN SVC_ESTATUS_ORDEN_SERVICIO seos ON seos.ID_ESTATUS_ORDEN_SERVICIO = sos.ID_ESTATUS_ORDEN_SERVICIO \r\n";
-	private static final String JOIN_SVT_CONVENIO_PF= "JOIN SVT_CONVENIO_PF scp ON  scp.DES_FOLIO = spb.CVE_FOLIO \r\n";
+	private static final String JOIN_SVT_CONVENIO_PF_RENOV = " JOIN SVT_CONVENIO_PF scp ON scp.ID_CONVENIO_PF  = srcp.ID_CONVENIO_PF ";
+	private static final String JOIN_SVT_CONVENIO_PF = " JOIN SVT_CONVENIO_PF scp ON scp.ID_CONVENIO_PF  = spb.ID_REGISTRO ";  
 	private static final String JOIN_SVT_ESTATUS_CONVENIO_PF = "JOIN SVC_ESTATUS_CONVENIO_PF secp ON secp.ID_ESTATUS_CONVENIO_PF = scp.ID_ESTATUS_CONVENIO \r\n";
 	private static final String SELECT = "SELECT (";
 	private static final String FROM_DUAL = ") FROM DUAL ";
@@ -52,7 +53,9 @@ public class ConsultaGeneral {
 	}
 
 	public String consultarTotalesGralFiltros(ReporteRequest datos, String formatoFecha) {
-			return SELECT + queryTotalRegistros(datos, formatoFecha) + ") AS totalRegistros ,(" + queryTotalImporte(datos, formatoFecha) +") AS totalImporte, (" + queryTotalIngreso(datos, formatoFecha) + ") AS totalIngreso FROM DUAL";
+			return SELECT + queryTotalRegistros(datos, formatoFecha) + ") AS totalRegistros ,(" 
+					+ queryTotalImporte(datos, formatoFecha) +") AS totalImporte, (" 
+					+ queryTotalIngreso(datos, formatoFecha) + ") AS totalIngreso FROM DUAL";
 	}
 	private String queryTotalRegistros (ReporteRequest datos, String formatoFecha) {
 		if(datos.getIdTipoConvenio() == null) {
@@ -108,20 +111,23 @@ public class ConsultaGeneral {
 	private StringBuilder generaEcabezados(ReporteRequest datos, String formatoFecha) {
 		StringBuilder query = new StringBuilder();
 	
-		query.append("SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle \r\n")
+		query.append("\r\n SELECT spd.ID_PAGO_DETALLE AS idPagoDetalle \r\n")
 				.append(", IFNULL(sd.DES_DELEGACION,'') AS delegacion \r\n")
-				.append(", IFNULL(sv.DES_VELATORIO,'') AS velatorio \r\n")
-				.append(", IFNULL(spb.CVE_FOLIO,'') AS folio \r\n")
-				.append(", IFNULL(sep.DES_ESTATUS,'') AS estatusPago \r\n")
-				.append(", IFNULL(smp.DES_METODO_PAGO,'') AS metodoPago \r\n")
-				.append(", IFNULL(spb.IMP_VALOR,'')  AS importe \r\n")
-				.append(", IFNULL(spd.IMP_PAGO,'')  AS ingresoNeto \r\n")
-				.append(", IFNULL(spd.REF_MOTIVO_MODIFICA,'')  AS modifPago \r\n")
-				.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre \r\n")
-				.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja \r\n")
-				.append(", (" + SELECT + queryTotalImporte(datos, formatoFecha)  +")) AS totalImporte ")
-				.append(", (" + SELECT + queryTotalIngreso(datos, formatoFecha) + ")) AS totalIngreso ")
-				.append(", (" + SELECT + queryTotalRegistros(datos, formatoFecha) + ")) AS totalRegistros ");
+				.append(", IFNULL(sv.DES_VELATORIO,'') AS velatorio \r\n");
+		if(datos.getIdTipoConvenio() == null || datos.getIdTipoConvenio() != 3 )
+			query.append(", IFNULL(spb.CVE_FOLIO,'') AS folio \r\n");
+		else
+			query.append(", IFNULL(srcp.REF_FOLIO_ADENDA,'') AS folio \r\n");
+		query.append(", IFNULL(sep.DES_ESTATUS,'') AS estatusPago \r\n")
+			.append(", IFNULL(smp.DES_METODO_PAGO,'') AS metodoPago \r\n")
+			.append(", IFNULL(spb.IMP_VALOR,'')  AS importe \r\n")
+			.append(", IFNULL(spd.IMP_PAGO,'')  AS ingresoNeto \r\n")
+			.append(", IFNULL(spd.REF_MOTIVO_MODIFICA,'')  AS modifPago \r\n")
+			.append(", IFNULL(DATE_FORMAT(spd.FEC_PAGO,'" + formatoFecha + " %H:%i'),'')  AS fecHoraCierre \r\n")
+			.append(", CASE WHEN spd.IND_ESTATUS_CAJA = 0 THEN 'Cerrado' ELSE 'Abierto' END  AS estatusCaja \r\n")
+			.append(", (" + SELECT + queryTotalImporte(datos, formatoFecha)  +")) AS totalImporte ")
+			.append(", (" + SELECT + queryTotalIngreso(datos, formatoFecha) + ")) AS totalIngreso ")
+			.append(", (" + SELECT + queryTotalRegistros(datos, formatoFecha) + ")) AS totalRegistros ");
 		return query;
 	}
 
@@ -172,7 +178,8 @@ public class ConsultaGeneral {
 	}
 	private String queryImporteTotalRenov (ReporteRequest datos, String formatoFecha) {
 		return importeTotal()
-				.append(JOIN_SVT_CONVENIO_PF)
+				.append(" JOIN  SVT_RENOVACION_CONVENIO_PF srcp ON srcp.ID_RENOVACION_CONVENIO_PF = spb.ID_REGISTRO")
+				.append(JOIN_SVT_CONVENIO_PF_RENOV)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 3, formatoFecha)).toString();
 	}
@@ -190,7 +197,8 @@ public class ConsultaGeneral {
 	}
 	private String queryTotalRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
 		return totalRegistros()
-				.append(JOIN_SVT_CONVENIO_PF)
+				.append(" JOIN  SVT_RENOVACION_CONVENIO_PF srcp ON srcp.ID_RENOVACION_CONVENIO_PF = spb.ID_REGISTRO")
+				.append(JOIN_SVT_CONVENIO_PF_RENOV)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 3, formatoFecha)).toString();
 	}
@@ -209,7 +217,8 @@ public class ConsultaGeneral {
 	}
 	private String queryIngresoTotalRenov(ReporteRequest datos, String formatoFecha) {
 		return totalIngreso()
-				.append(JOIN_SVT_CONVENIO_PF)
+				.append(" JOIN  SVT_RENOVACION_CONVENIO_PF srcp ON srcp.ID_RENOVACION_CONVENIO_PF = spb.ID_REGISTRO")
+				.append(JOIN_SVT_CONVENIO_PF_RENOV)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 3, formatoFecha)).toString();
 	}
@@ -237,7 +246,8 @@ public class ConsultaGeneral {
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
 				.append(generaFromJoin())
-				.append(JOIN_SVT_CONVENIO_PF)
+				.append(" JOIN  SVT_RENOVACION_CONVENIO_PF srcp ON srcp.ID_RENOVACION_CONVENIO_PF = spb.ID_REGISTRO")
+				.append(JOIN_SVT_CONVENIO_PF_RENOV)
 				.append(JOIN_SVT_ESTATUS_CONVENIO_PF)
 				.append(generaWhere(datos, 3, formatoFecha)).toString();
 	}
