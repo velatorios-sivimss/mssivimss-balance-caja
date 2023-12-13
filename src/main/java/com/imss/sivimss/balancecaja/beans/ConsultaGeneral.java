@@ -242,6 +242,7 @@ public class ConsultaGeneral {
 	}
 
 	private String queryRenovacionConvenios(ReporteRequest datos, String formatoFecha) {
+		datos.setIdTipoConvenio(3);
 		return generaEcabezados(datos, formatoFecha).append(", IFNULL(secp.DES_ESTATUS,'') AS estatus ")
 				.append(",'Pago de Renovación de convenios de previsión funeraria' AS tipoIngreso ")
 				.append(", DATE_FORMAT(scp.FEC_ALTA,'" + formatoFecha + AS_FECHA)
