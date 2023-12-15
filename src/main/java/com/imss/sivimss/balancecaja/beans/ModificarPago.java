@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
+
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +27,21 @@ public class ModificarPago {
         q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_DATE);
         q.addWhere("ID_PAGO_DETALLE = " + request.getIdPagoDetalle());
         String query = q.obtenerQueryActualizar();
-        String encoded = DatatypeConverter.printBase64Binary(query.getBytes());
+        String encoded = DatatypeConverter.printBase64Binary(query.getBytes(StandardCharsets.UTF_8));
+        parametro.put(AppConstantes.QUERY, encoded);
+        dr.setDatos(parametro);
+        return dr;
+    }
+    public DatosRequest actualizaModPago(PagoRequest request, String usuario){
+        DatosRequest dr = new DatosRequest();
+        Map<String, Object> parametro = new HashMap<>();
+        final QueryHelper q = new QueryHelper("UPDATE SVT_PAGO_BITACORA");
+        q.agregarParametroValues("IND_MOD_PAGO", "1");
+        q.agregarParametroValues("ID_USUARIO_MODIFICA", "'"+usuario+"'");
+        q.agregarParametroValues("FEC_ACTUALIZACION", CURRENT_DATE);
+        q.addWhere(" ID_PAGO_BITACORA = (SELECT spd.ID_PAGO_BITACORA  FROM SVT_PAGO_DETALLE spd WHERE spd.ID_PAGO_DETALLE = " + request.getIdPagoDetalle() + ")");
+        String query = q.obtenerQueryActualizar();
+        String encoded = DatatypeConverter.printBase64Binary(query.getBytes(StandardCharsets.UTF_8));
         parametro.put(AppConstantes.QUERY, encoded);
         dr.setDatos(parametro);
         return dr;
