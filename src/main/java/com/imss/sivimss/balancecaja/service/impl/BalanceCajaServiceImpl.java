@@ -1,6 +1,7 @@
 package com.imss.sivimss.balancecaja.service.impl;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -195,6 +196,8 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		String datosJson = String.valueOf(request.getDatos().get(AppConstantes.DATOS));
 		PagoRequest actualizaPago = json.fromJson(datosJson, PagoRequest.class);
 		Response<Object>response;
+		providerServiceRestTemplate.consumirServicio(modificarPago.actualizaModPago(actualizaPago,usuarioDto.getIdUsuario().toString()).getDatos(),
+				urlDominio.concat(AppConstantes.CATALOGO_ACTUALIZAR),authentication);
 		response = providerServiceRestTemplate.consumirServicio(modificarPago.actualizaMotivo(actualizaPago,usuarioDto.getIdUsuario().toString()).getDatos(),
 				urlDominio.concat(AppConstantes.CATALOGO_ACTUALIZAR),authentication);
 		if(response.getCodigo()==200){
@@ -306,7 +309,7 @@ public class BalanceCajaServiceImpl implements BalanceCajaService{
 		return str;
 	}
 	private DatosRequest encodeQuery(String query, DatosRequest request) {
-		String encoded = DatatypeConverter.printBase64Binary(query.getBytes());
+		String encoded = DatatypeConverter.printBase64Binary(query.getBytes(StandardCharsets.UTF_8));
 		request.getDatos().put(AppConstantes.QUERY, encoded);
 		return request;
 	}
